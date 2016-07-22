@@ -1,0 +1,110 @@
+#include <IRremote.h>
+#include <math.h>
+#include <Wire.h>
+
+#define SLAVE_ADDRESS 0x04
+bool state = false;
+bool autoclose = false;
+
+IRsend irsend;
+volatile int tempB = 25;
+volatile int IRactB = 0;
+volatile int IRact = 0;
+
+unsigned int open_off [35]={2500,3300,350,1300,1200,450,1200,450,400,1250,1200,400,1250,400,400,1250,1200,450,1200,450,350,1300,350,1250,400,1250,400,1250,400,1250,400,1250,1250,400,400};
+unsigned int shake [35]={2500,3350,350,1300,1200,450,1200,400,400,1250,1200,450,1200,450,400,1250,1200,450,1200,400,400,1250,400,1250,1200,450,400,1250,350,1300,400,1250,350,1300,400};
+unsigned int up [35]={2500,3350,400,1250,1200,450,1200,400,400,1250,1200,450,1200,450,350,1300,1200,450,1200,400,1200,450,400,1250,350,1300,1200,450,1200,450,350,1250,400,1250,400};
+unsigned int down [35]={2500,3300,400,1250,1200,450,1200,450,350,1300,1200,450,1150,450,400,1250,1200,450,1200,450,1200,450,350,1300,1200,400,1200,450,350,1300,400,1250,350,1300,350};
+
+void setup()
+{
+  Serial.begin(9600);
+}
+
+void loop()
+{
+  while(Serial.available()){
+    autoclose=false;
+    /*if(state)
+        Serial.println("true");
+    else
+        Serial.println("false");*/
+    IRactB = IRact;
+    IRact=Serial.read(); 
+    IRact = IRact-48;
+    //Serial.println(IRact);
+    if(IRactB == 5)
+    {
+          if(IRact ==1)
+          {
+              //Serial.println("close");
+              irsend.sendRaw(open_off, 35, 38); 
+              state=false;
+              autoclose=true;
+              delay(50);
+          }
+     }
+    if(!autoclose)
+    {
+    //Serial.println("here");
+    switch(IRact) 
+    { 
+          case 1: 
+             irsend.sendRaw(open_off, 35, 38);
+             state = !state;
+             delay(50); 
+             break; 
+          case 2: 
+             irsend.sendRaw(shake, 35, 38); 
+             delay(50); 
+             break; 
+          case 3: 
+             irsend.sendRaw(up, 35, 38);
+             delay(50); 
+             break;
+          case 4: 
+             irsend.sendRaw(down, 35, 38);
+             delay(50); 
+             break; 
+          case 5:   
+             double temp = Thermister(analogRead(0));
+             //while(n<=10){
+             Serial.println(tempB);
+             Serial.println(temp);
+             if(temp > tempB)
+             {
+                 for(int i = 0; i < (int)(temp-tempB); i++)
+                 {
+                      irsend.sendRaw(up,35,38);
+                      tempB=(int)temp;
+                      delay(50);
+                 }
+             }
+             else
+             {
+                  for(int i = 0; i < (int)(tempB-temp); i++)
+                  {
+                      irsend.sendRaw(down,35,38);
+                      tempB=(int)temp;
+                      delay(50);
+                  }
+                  
+             }
+             //delay(100);
+             //n++;
+             //}
+             break;
+      }
+      
+    }
+      }
+  }
+
+double Thermister(int RawADC){
+  double Temp;
+  Temp = log(((10240000/RawADC)-10000));
+  Temp = 1 / (0.001129148 + (0.000234125 + (0.0000000876741 * Temp * Temp))*Temp);
+  Temp = Temp - 273.15; //convert kelvin to celcius
+  return Temp;
+}
+
