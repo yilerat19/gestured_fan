@@ -24,6 +24,7 @@ https://youtu.be/tmEhdlocdy4
 
 #code
 This project has 3 parts of code
+
 1. the auto log part:auto_execure.txt
 
 2. for raspberry pi and its camera to catch the gesture:code_on_rpi.py
